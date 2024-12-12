@@ -1,0 +1,13 @@
+<resources>
+    <style name="Theme.AgptingSDKdemo" parent="Theme.AppCompat.Light.NoActionBar">
+        <!-- 自定义主题属性 -->
+        <item name="colorPrimary">@color/colorPrimary</item>
+        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
+        <item name="colorAccent">@color/colorAccent</item>
+        <item name="colorPrimaryVariant">@color/colorPrimaryVariant</item> <!-- 添加此行 -->
+        <item name="colorSecondary">@color/colorSecondary</item> <!-- 添加此行 -->
+        <item name="colorSecondaryVariant">@color/colorSecondaryVariant</item> <!-- 添加此行 -->
+        <item name="colorOnPrimary">@color/colorOnPrimary</item> <!-- 添加此行 -->
+        <item name="colorOnSecondary">@color/colorOnSecondary</item> <!-- 添加此行 -->
+    </style>
+</resources>

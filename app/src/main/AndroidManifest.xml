@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    package="com.agpting.sdkdemo">
+
+    <uses-feature
+        android:name="android.hardware.touchscreen"
+        android:required="false" />
+    <uses-feature
+        android:name="android.software.leanback"
+        android:required="false" />
+
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+
+    <!--允许访问网络，必选权限-->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <!--允许获取网络状态-->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <!--允许获取wifi网络信息-->
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <!--允许写入扩展存储，用于搜索结果缓存，若无此权限则写到私有目录-->
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="32" tools:ignore="ScopedStorage" />
+    <!--允许写设备缓存，用于问题排查-->
+    <uses-permission android:name="android.permission.WRITE_SETTINGS" tools:ignore="ProtectedPermissions" />
+    <!--允许读设备等信息，用于问题排查-->
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
+    <!--如果需要后台定位功能-->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />
+    <uses-permission android:name="android.permission.VIBRATE"/>
+
+    <application
+        android:allowBackup="true"
+        android:banner="@drawable/app_banner"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
+        android:icon="@mipmap/ic_launcher"
+        android:label="AgptingSDKdemo"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.AppCompat.NoActionBar"
+        tools:targetApi="31"
+        tools:replace="android:label,android:theme"
+        android:largeHeap="true">
+
+        <meta-data
+            android:name="com.amap.api.v2.apikey"
+            android:value="9833781f8572c6d53f8813755d3624aa"/>
+        <meta-data
+            android:name="com.amap.api.v2.domain"
+            android:value="1" />
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:banner="@drawable/app_banner"
+            android:theme="@style/Theme.AppCompat.NoActionBar">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+                <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!-- 更新服务配置 -->
+        <service
+            android:name=".VoiceListenerService"
+            android:foregroundServiceType="microphone"
+            android:enabled="true"
+            android:exported="false">
+        </service>
+    </application>
+
+</manifest>

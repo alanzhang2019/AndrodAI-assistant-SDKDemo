@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:padding="8dp">
+
+    <!-- 用户消息 (靠右) -->
+    <LinearLayout
+        android:id="@+id/userMessageContainer"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentEnd="true"
+        android:layout_marginStart="50dp"
+        android:layout_marginEnd="8dp"
+        android:background="@drawable/user_message_background"
+        android:visibility="gone">
+
+        <TextView
+            android:id="@+id/userMessageText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:padding="12dp"
+            android:textColor="#000000" />
+    </LinearLayout>
+
+    <!-- 助手消息 (靠左) -->
+    <LinearLayout
+        android:id="@+id/assistantMessageContainer"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentStart="true"
+        android:layout_marginEnd="50dp"
+        android:layout_marginStart="8dp"
+        android:background="@drawable/assistant_message_background"
+        android:visibility="gone">
+
+        <TextView
+            android:id="@+id/assistantMessageText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:padding="12dp"
+            android:textColor="#000000" />
+    </LinearLayout>
+
+</RelativeLayout>

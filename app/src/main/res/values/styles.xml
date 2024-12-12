@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="ConversationTextAppearance" parent="TextAppearance.AppCompat">
+        <item name="android:textSize">8sp</item>
+        <item name="android:textColor">@android:color/white</item>
+        <!-- 你可以添加其他文本样式属性，如字体粗细、字体家族等 -->
+    </style>
+</resources>

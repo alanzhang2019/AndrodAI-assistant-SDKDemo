@@ -1,0 +1,87 @@
+plugins {
+    id 'com.android.application'
+    id 'org.jetbrains.kotlin.android'
+}
+
+android {
+    compileSdk 34
+    namespace "com.agpting.sdkdemo"
+    defaultConfig {
+        applicationId "com.agpting.sdkdemo"
+        minSdk 26
+        targetSdk 34
+        versionCode 1
+        versionName "1.0"
+        multiDexEnabled true
+        ndk {
+            abiFilters 'arm64-v8a'
+        }
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+    kotlinOptions {
+        jvmTarget = '17'
+    }
+    buildFeatures {
+        viewBinding true
+    }
+
+    configurations.configureEach {
+        resolutionStrategy.force "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+        resolutionStrategy.force "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
+        resolutionStrategy.force "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
+    }
+
+    sourceSets {
+        main {
+            jniLibs.srcDirs = ['src/main/jniLibs']
+        }
+    }
+
+    packagingOptions {
+        pickFirst 'lib/arm64-v8a/libsherpa-ncnn-jni.so'
+        pickFirst 'lib/arm64-v8a/libncnn.so'
+        pickFirst 'lib/arm64-v8a/libsherpa-ncnn-core.so'
+        resources {
+            excludes += ['META-INF/CONTRIBUTORS.md']
+            excludes += ['META-INF/LICENSE.md']
+            excludes += ['META-INF/NOTICE.md']
+        }
+    }
+}
+
+dependencies {
+    // 添加本地 aar 依赖
+    implementation fileTree(dir: 'libs', include: ['*.aar'])
+    implementation 'com.google.code.gson:gson:2.10.1'
+    implementation 'com.fasterxml.jackson.core:jackson-core:2.15.3'
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.15.3'
+    implementation 'com.fasterxml.jackson.core:jackson-annotations:2.15.3'
+    implementation 'com.google.android.material:material:1.9.0'
+    implementation 'com.google.android.gms:play-services-location:18.0.0'
+
+    implementation 'io.reactivex.rxjava3:rxjava:3.1.5'
+    implementation 'io.reactivex.rxjava3:rxandroid:3.0.0'
+
+    implementation 'androidx.navigation:navigation-fragment-ktx:2.7.7'
+    implementation 'androidx.navigation:navigation-ui-ktx:2.7.7'
+    // implementation project(':agptingsdk')
+    implementation fileTree(dir: "libs", include: ['*.jar'])
+    implementation 'com.microsoft.onnxruntime:onnxruntime-android:1.14.0'
+    implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+
+    // 修改 Jieba 依赖的声明方式
+    implementation ('com.huaban:jieba-analysis:1.0.2') {
+        exclude group: 'org.apache.commons', module: 'commons-lang3'
+    }
+
+    implementation 'com.atilika.kuromoji:kuromoji-ipadic:0.9.0'
+}
