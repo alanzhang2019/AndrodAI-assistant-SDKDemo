@@ -1,4 +1,20 @@
 ![APP截图](images/APP截图.jpg)
+支持中日英三语意图识别，已训练意图包括：
+
+音乐
+
+导航
+
+天气
+
+电话
+
+打开
+
+order/close/exit等意图
+
+非训练意图会自动接入LLM（任意大模型，当前是openAI），并返回大模型回复。
+安装后会自动注册ID，并分配1美金token额度用于测试。
 
 #12-28更新
 1、修复英文what's the weather like today意图识别错误
