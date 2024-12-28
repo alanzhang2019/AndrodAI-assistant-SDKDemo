@@ -1,3 +1,5 @@
+![APP截图](images/APP截图.jpg)
+
 #12-28更新
 1、修复英文what's the weather like today意图识别错误
 2、修复英文second意图data显示为数字
@@ -230,3 +232,14 @@ v1.0.0: 初始版本
 - 文本对话功能
 - 意图识别支持
 - 特定功能处理
+
+![alt text](fb067fb1a09ec623fcf16088779d73c.jpg)
+![alt text](a410431bda86bc7e57bc32e0030b308.jpg)
+
+# AndroidAI Assistant SDK Demo
+
+## 联系方式
+扫描下方二维码加入技术交流群：
+
+![技术交流群](images/技术交流群.jpg)
+![开发者微信](images/开发者微信.jpg)
