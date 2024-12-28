@@ -233,9 +233,6 @@ v1.0.0: 初始版本
 - 意图识别支持
 - 特定功能处理
 
-![alt text](fb067fb1a09ec623fcf16088779d73c.jpg)
-![alt text](a410431bda86bc7e57bc32e0030b308.jpg)
-
 # AndroidAI Assistant SDK Demo
 
 ## 联系方式
