@@ -5,6 +5,31 @@
     android:orientation="vertical"
     android:padding="16dp">
 
+    <!-- 唤醒状态指示器移到最顶端 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:padding="8dp"
+        android:background="#F5F5F5">  <!-- 添加背景色使状态栏更明显 -->
+
+        <TextView
+            android:id="@+id/wakeupStatusText"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:textSize="14sp"
+            android:text="正在初始化唤醒系统..." />
+
+        <ProgressBar
+            android:id="@+id/wakeupProgressBar"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_marginStart="8dp"
+            style="?android:attr/progressBarStyleSmall" />
+    </LinearLayout>
+
     <!-- 状态显示区域 -->
     <LinearLayout
         android:layout_width="match_parent"

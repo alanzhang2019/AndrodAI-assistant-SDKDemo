@@ -9,10 +9,12 @@
     <color name="colorPrimary">#3F51B5</color>
     <color name="colorPrimaryDark">#303F9F</color>
     <color name="colorAccent">#FF4081</color>
-    <color name="colorPrimaryVariant">#5A67D8</color> <!-- 添加此行 -->
-    <color name="colorSecondary">#03DAC6</color> <!-- 添加此行 -->
-    <color name="colorSecondaryVariant">#018786</color> <!-- 添加此行 -->
-    <color name="colorOnPrimary">#FFFFFF</color> <!-- 添加此行 -->
-    <color name="colorOnSecondary">#000000</color> <!-- 添加此行 -->
+    <color name="colorPrimaryVariant">#5A67D8</color>
+    <color name="colorSecondary">#03DAC6</color>
+    <color name="colorSecondaryVariant">#018786</color>
+    <color name="colorOnPrimary">#FFFFFF</color>
+    <color name="colorOnSecondary">#000000</color>
     <color name="ripple_color">#33FFFFFF</color>
+    <color name="green">#4CAF50</color>
+    <color name="gray">#757575</color>
 </resources>

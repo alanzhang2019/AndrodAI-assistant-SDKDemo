@@ -61,6 +61,8 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ExecutorService;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -111,68 +113,187 @@ public class MainActivity extends AppCompatActivity {
     private volatile boolean isAdjustingParameters = false;
     private final Object parameterLock = new Object();
 
+    // 添加唤醒状态指示器
+    private TextView wakeupStatusText;
+    private ProgressBar wakeupProgressBar;
+
+    private static final int PERMISSION_REQUEST_CODE = 1;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
-        // 初始化权限管理器
-        permissionManager = new PermissionManager(this);
         
-        // 初始化UI组件 - 移到最前面
-        initializeViews();
+        // 1. 初始化基本 UI 组件
+        initializeEssentialViews();
         
-        // 其他初始化
-        permissionManager.checkAndRequestPermissions();
-        initializeVoiceAssist();
-        initializeConversationRecyclerView();
-        initializeLocationServices();
-        setupWakeupControls();
+        // 2. 检查权限并初始化 VoiceAssist
+        if (checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+            requestPermissions(new String[]{Manifest.permission.RECORD_AUDIO}, PERMISSION_REQUEST_CODE);
+        } else {
+            initializeAll();
+        }
     }
 
-    private void initializeViews() {
-        // 基本UI组件
-        statusText = findViewById(R.id.statusText);
-        progressBar = findViewById(R.id.progressBar);
-        intentTextView = findViewById(R.id.intentTextView);
+    private void initializeAll() {
+        // 1. 初始化 VoiceAssist
+        initializeVoiceAssist();
+        
+        // 2. 初始化其他 UI 组件
+        initializeComponents();
+        
+        // 3. 设置按钮点击事件
+        setupClickListeners();
+    }
+
+    private void initializeComponents() {
+        // 初始化对话列表
         conversationRecyclerView = findViewById(R.id.conversationRecyclerView);
+        conversationAdapter = new ConversationAdapter(new ArrayList<>());
+        conversationRecyclerView.setAdapter(conversationAdapter);
+        conversationRecyclerView.setLayoutManager(new LinearLayoutManager(this));
+
+        // 初始化输入相关组件
         inputEditText = findViewById(R.id.inputEditText);
         sendButton = findViewById(R.id.sendButton);
 
-        // 参数控制相关的TextView
+        // 初始化参数控制相关组件
         tvMicGain = findViewById(R.id.tvMicGain);
         tvAudioGain = findViewById(R.id.tvAudioGain);
         tvSensitivity = findViewById(R.id.tvSensitivity);
         tvSampleRate = findViewById(R.id.tvSampleRate);
 
-        // 初始状态设置
-        if (statusText != null) statusText.setText("空闲");
-        if (progressBar != null) progressBar.setVisibility(View.INVISIBLE);
-        if (intentTextView != null) intentTextView.setText("意图: 未识别");
+        // 更新参数显示
+        updateParameterDisplay();
+    }
 
+    private void setupClickListeners() {
+        // 设置发送按钮点击事件
         sendButton.setOnClickListener(v -> {
-            String input = inputEditText.getText().toString().trim();
-            if (!input.isEmpty()) {
-                handleUserInput(input);
+            String text = inputEditText.getText().toString().trim();
+            if (!text.isEmpty()) {
+                handleUserInput(text);
                 inputEditText.setText("");
+            }
+        });
+
+        // 麦克风增益调节按钮
+        findViewById(R.id.btnMicGainDecrease).setOnClickListener(v -> {
+            if (micGain > MIN_GAIN) {
+                micGain = Math.max(MIN_GAIN, micGain - GAIN_STEP);
+                updateParameterDisplay();
+                updateWakeupParameters();
+            }
+        });
+
+        findViewById(R.id.btnMicGainIncrease).setOnClickListener(v -> {
+            if (micGain < MAX_GAIN) {
+                micGain = Math.min(MAX_GAIN, micGain + GAIN_STEP);
+                updateParameterDisplay();
+                updateWakeupParameters();
+            }
+        });
+
+        // 音频增益调节按钮
+        findViewById(R.id.btnAudioGainDecrease).setOnClickListener(v -> {
+            if (audioGain > MIN_GAIN) {
+                audioGain = Math.max(MIN_GAIN, audioGain - GAIN_STEP);
+                updateParameterDisplay();
+                updateWakeupParameters();
+            }
+        });
+
+        findViewById(R.id.btnAudioGainIncrease).setOnClickListener(v -> {
+            if (audioGain < MAX_GAIN) {
+                audioGain = Math.min(MAX_GAIN, audioGain + GAIN_STEP);
+                updateParameterDisplay();
+                updateWakeupParameters();
+            }
+        });
+
+        // 灵敏度调节按钮
+        findViewById(R.id.btnSensitivityDecrease).setOnClickListener(v -> {
+            if (sensitivity > MIN_SENSITIVITY) {
+                sensitivity = Math.max(MIN_SENSITIVITY, sensitivity - SENSITIVITY_STEP);
+                updateParameterDisplay();
+                updateWakeupParameters();
+            }
+        });
+
+        findViewById(R.id.btnSensitivityIncrease).setOnClickListener(v -> {
+            if (sensitivity < MAX_SENSITIVITY) {
+                sensitivity = Math.min(MAX_SENSITIVITY, sensitivity + SENSITIVITY_STEP);
+                updateParameterDisplay();
+                updateWakeupParameters();
+            }
+        });
+
+        // 采样率调节按钮
+        findViewById(R.id.btnSampleRateDecrease).setOnClickListener(v -> {
+            if (sampleRate > MIN_SAMPLE_RATE) {
+                sampleRate = Math.max(MIN_SAMPLE_RATE, sampleRate - SAMPLE_RATE_STEP);
+                updateParameterDisplay();
+                updateWakeupParameters();
+            }
+        });
+
+        findViewById(R.id.btnSampleRateIncrease).setOnClickListener(v -> {
+            if (sampleRate < MAX_SAMPLE_RATE) {
+                sampleRate = Math.min(MAX_SAMPLE_RATE, sampleRate + SAMPLE_RATE_STEP);
+                updateParameterDisplay();
+                updateWakeupParameters();
             }
         });
     }
 
-    private void initializeVoiceAssist() {
-        voiceAssist = new VoiceAssist(this);
-        setupVoiceAssistCallback();
-        
-        boolean initSuccess = voiceAssist.initializeComponents();
-        if (!initSuccess) {
-            Log.e(TAG, "VoiceAssist initialization failed");
-            showError("语音助手初始化失败，请检查网络连接");
-            return;
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == PERMISSION_REQUEST_CODE) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                initializeAll();
+            } else {
+                Toast.makeText(this, "需要录音权限才能使用语音功能", Toast.LENGTH_LONG).show();
+            }
         }
-        voiceAssist.setCurrentLocation(currentLocation);
+    }
+
+    private void initializeVoiceAssist() {
+        try {
+            voiceAssist = new VoiceAssist(this);
+            setupVoiceAssistCallback();
+            
+            updateWakeupStatus(false, "正在初始化语音助手...");
+            
+            boolean initSuccess = voiceAssist.initializeComponents();
+            if (!initSuccess) {
+                Log.e(TAG, "VoiceAssist initialization failed");
+                updateWakeupStatus(false, "语音助手初始化失败");
+                showError("语音助手初始化失败，请检查网络连接");
+                return;
+            }
+            
+            voiceAssist.setCurrentLocation(currentLocation);
+            updateWakeupStatus(false, "正在准备唤醒系统...");
+            voiceAssist.startWakeupDetection();
+        } catch (Exception e) {
+            Log.e(TAG, "Error initializing VoiceAssist", e);
+            updateWakeupStatus(false, "语音助手初始化失败");
+            showError("语音助手初始化失败: " + e.getMessage());
+        }
+    }
+
+    private void initializeEssentialViews() {
+        // 只初始化立即需要的视图
+        statusText = findViewById(R.id.statusText);
+        progressBar = findViewById(R.id.progressBar);
         
-        // 启动唤醒检测
-        voiceAssist.startWakeupDetection();
+        // 添加唤醒状态指示器初始化
+        wakeupStatusText = findViewById(R.id.wakeupStatusText);
+        wakeupProgressBar = findViewById(R.id.wakeupProgressBar);
+        
+        // 显示初始状态
+        updateWakeupStatus(false, "正在初始化唤醒系统...");
     }
 
     private void initializeConversationRecyclerView() {
@@ -184,8 +305,11 @@ public class MainActivity extends AppCompatActivity {
     private void handleUserInput(String text) {
         // 显示用户输入
         addConversationItem(text, ConversationItem.TYPE_USER);
+        
         // 处理用户输入
-        voiceAssist.handleUserInput(text);
+        if (voiceAssist != null) {
+            voiceAssist.handleUserInput(text);
+        }
     }
 
     private void addConversationItem(String message, int type) {
@@ -207,14 +331,19 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        permissionManager.onRequestPermissionsResult(requestCode, permissions, grantResults);
-    }
-
     private void setupVoiceAssistCallback() {
         voiceAssist.setCallback(new VoiceAssist.VoiceAssistCallback() {
+            @Override
+            public void onWakeupSystemReady() {
+                Log.d(TAG, "onWakeupSystemReady callback received");
+                runOnUiThread(() -> {
+                    updateWakeupStatus(true, "唤醒系统已就绪");
+                    if (wakeupProgressBar != null) {
+                        wakeupProgressBar.setVisibility(View.GONE);
+                    }
+                });
+            }
+
             @Override
             public void onStateChanged(SpeechState newState) {
                 runOnUiThread(() -> {
@@ -316,6 +445,7 @@ public class MainActivity extends AppCompatActivity {
             public void onWakeup() {
                 Log.d(TAG, "Wake-up detected!");
                 runOnUiThread(() -> {
+                    updateWakeupStatus(false, "已唤醒");  // 改回显示唤醒状态
                     Toast.makeText(MainActivity.this, "唤醒成功!", Toast.LENGTH_SHORT).show();
                 });
             }
@@ -434,79 +564,98 @@ public class MainActivity extends AppCompatActivity {
     void initializeLocationServices() {
         LocationManager locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-            locationManager.requestLocationUpdates(
-                LocationManager.GPS_PROVIDER,
-                10000,  // 10 seconds
-                10,     // 10 meters
-                new LocationListener() {
-                    @Override
-                    public void onLocationChanged(Location location) {
-                        // 使用 Geocoder 将经纬度转换为地址
-                        try {
-                            Geocoder geocoder = new Geocoder(MainActivity.this, Locale.getDefault());
-                            List<Address> addresses = geocoder.getFromLocation(
-                                location.getLatitude(),
-                                location.getLongitude(),
-                                1
-                            );
-                            if (!addresses.isEmpty()) {
-                                Address address = addresses.get(0);
-                                // 构建地址字符串
-                                String locationStr = String.format("%s%s%s",
-                                    address.getAdminArea(),
-                                    address.getLocality(),
-                                    address.getSubLocality()
-                                );
-                                currentLocation = locationStr;
-                                if (voiceAssist != null) {
-                                    voiceAssist.setCurrentLocation(locationStr);
-                                }
-                                Log.d(TAG, "Location updated: " + locationStr);
-                            }
-                        } catch (IOException e) {
-                            Log.e(TAG, "Error getting address from location", e);
+            // 使用新的LocationListener实现
+            LocationListener locationListener = new LocationListener() {
+                @Override
+                public void onLocationChanged(@NonNull Location location) {
+                    updateLocationInfo(location);
+                }
+            };
+
+            // 使用新的请求位置更新方法
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                // Android 12及以上版本
+                locationManager.requestLocationUpdates(
+                    LocationManager.GPS_PROVIDER,
+                    10000,  // 10 seconds
+                    10f,    // 10 meters
+                    Executors.newSingleThreadExecutor(),
+                    locationListener
+                );
+            } else {
+                // 较旧版本
+                locationManager.requestLocationUpdates(
+                    LocationManager.GPS_PROVIDER,
+                    10000,
+                    10f,
+                    locationListener
+                );
+            }
+            
+            // 获取最后已知位置
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                locationManager.getCurrentLocation(
+                    LocationManager.GPS_PROVIDER,
+                    null,
+                    Executors.newSingleThreadExecutor(),
+                    location -> {
+                        if (location != null) {
+                            updateLocationInfo(location);
                         }
                     }
-
-                    @Override
-                    public void onStatusChanged(String provider, int status, Bundle extras) {}
-
-                    @Override
-                    public void onProviderEnabled(String provider) {}
-
-                    @Override
-                    public void onProviderDisabled(String provider) {}
-                }
-            );
-            
-            // 立即尝试获取最后已知位置
-            try {
+                );
+            } else {
                 Location lastLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
                 if (lastLocation != null) {
-                    Geocoder geocoder = new Geocoder(this, Locale.getDefault());
-                    List<Address> addresses = geocoder.getFromLocation(
-                        lastLocation.getLatitude(),
-                        lastLocation.getLongitude(),
-                        1
-                    );
-                    if (!addresses.isEmpty()) {
-                        Address address = addresses.get(0);
-                        String locationStr = String.format("%s%s%s",
-                            address.getAdminArea(),
-                            address.getLocality(),
-                            address.getSubLocality()
-                        );
-                        currentLocation = locationStr;
-                        if (voiceAssist != null) {
-                            voiceAssist.setCurrentLocation(locationStr);
-                        }
-                        Log.d(TAG, "Initial location set: " + locationStr);
-                    }
+                    updateLocationInfo(lastLocation);
                 }
-            } catch (SecurityException | IOException e) {
-                Log.e(TAG, "Error getting initial location", e);
             }
         }
+    }
+
+    // 添加新的辅助方法处理位置信息更新
+    private void updateLocationInfo(Location location) {
+        try {
+            Geocoder geocoder = new Geocoder(this, Locale.getDefault());
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                // Android 13及以上版本使用新的异步API
+                geocoder.getFromLocation(
+                    location.getLatitude(),
+                    location.getLongitude(),
+                    1,
+                    addresses -> {
+                        if (!addresses.isEmpty()) {
+                            processAddress(addresses.get(0));
+                        }
+                    }
+                );
+            } else {
+                // 较旧版本使用同步API
+                List<Address> addresses = geocoder.getFromLocation(
+                    location.getLatitude(),
+                    location.getLongitude(),
+                    1
+                );
+                if (!addresses.isEmpty()) {
+                    processAddress(addresses.get(0));
+                }
+            }
+        } catch (IOException e) {
+            Log.e(TAG, "Error getting address from location", e);
+        }
+    }
+
+    private void processAddress(Address address) {
+        String locationStr = String.format("%s%s%s",
+            address.getAdminArea() != null ? address.getAdminArea() : "",
+            address.getLocality() != null ? address.getLocality() : "",
+            address.getSubLocality() != null ? address.getSubLocality() : ""
+        );
+        currentLocation = locationStr;
+        if (voiceAssist != null) {
+            voiceAssist.setCurrentLocation(locationStr);
+        }
+        Log.d(TAG, "Location updated: " + locationStr);
     }
 
     // 添加音乐处理方法
@@ -644,19 +793,30 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void updateParameterDisplay() {
-        tvMicGain.setText(String.format("麦克风增益: %.1f", micGain));
-        tvAudioGain.setText(String.format("音频增益: %.1f", audioGain));
-        tvSensitivity.setText(String.format("灵敏度: %.2f", sensitivity));
-        tvSampleRate.setText(String.format("采样率: %d", sampleRate));
+        if (tvMicGain != null) {
+            tvMicGain.setText(String.format("麦克风增益: %.1f", micGain));
+        }
+        if (tvAudioGain != null) {
+            tvAudioGain.setText(String.format("音频增益: %.1f", audioGain));
+        }
+        if (tvSensitivity != null) {
+            tvSensitivity.setText(String.format("灵敏度: %.2f", sensitivity));
+        }
+        if (tvSampleRate != null) {
+            tvSampleRate.setText(String.format("采样率: %d", sampleRate));
+        }
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        // 检查是否正在调整参数
         synchronized (parameterLock) {
             if (!isAdjustingParameters && voiceAssist != null) {
-                voiceAssist.startWakeupDetection();
+                if (!voiceAssist.isWakeupEnabled()) {
+                    updateWakeupStatus(false, "正在恢复唤醒系统...");
+                    voiceAssist.startWakeupDetection();
+                }
+                // 移除这里的状态更新，让回调来处理
             }
         }
     }
@@ -691,17 +851,20 @@ public class MainActivity extends AppCompatActivity {
                 runOnUiThread(() -> updateUIState(SpeechState.IDLE));
                 Thread.sleep(100);
 
-                // 配置新参数，包括降噪设置
+                // 使用用户调整的参数值
                 voiceAssist.configureWakeupParameters(
-                    2.0f,    // 麦克风增益
-                    2.0f,    // 音频增益
-                    0.6f,    // 灵敏度
-                    16000,   // 采样率
-                    true,    // 启用降噪
-                    0.12f,   // 降噪阈值（降低以提高灵敏度）
-                    3        // 平滑帧数（减少以提高响应速度）
+                    micGain,         // 使用当前麦克风增益值
+                    audioGain,       // 使用当前音频增益值
+                    sensitivity,     // 使用当前灵敏度值
+                    sampleRate,      // 使用当前采样率值
+                    true,           // 保持降噪启用
+                    0.12f,          // 保持默认降噪阈值
+                    3               // 保持默认平滑帧数
                 );
                 
+                Log.d(TAG, String.format("Updating parameters - MicGain: %.1f, AudioGain: %.1f, " +
+                    "Sensitivity: %.2f, SampleRate: %d", micGain, audioGain, sensitivity, sampleRate));
+
                 Thread.sleep(300);
 
                 runOnUiThread(() -> {
@@ -727,5 +890,21 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         }).start();
+    }
+
+    // 添加更新唤醒状态的辅助方法
+    private void updateWakeupStatus(boolean isReady, String message) {
+        Log.d(TAG, "updateWakeupStatus called: isReady=" + isReady + ", message=" + message);
+        runOnUiThread(() -> {
+            if (wakeupStatusText != null) {
+                Log.d(TAG, "Setting wakeup status text to: " + message);
+                wakeupStatusText.setText(message);
+                int color = isReady ? R.color.green : R.color.gray;
+                wakeupStatusText.setTextColor(getResources().getColor(color));
+            }
+            if (wakeupProgressBar != null) {
+                wakeupProgressBar.setVisibility(isReady ? View.GONE : View.VISIBLE);
+            }
+        });
     }
 }
