@@ -38,6 +38,29 @@
                 style="?android:attr/progressBarStyleSmall" />
         </LinearLayout>
 
+        <!-- 控制按钮 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="8dp">
+
+            <Button
+                android:id="@+id/test_stop_button"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="停止唤醒" />
+
+            <Button
+                android:id="@+id/test_start_button"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="启动唤醒" />
+
+        </LinearLayout>
+
         <!-- 状态显示区域 -->
         <LinearLayout
             android:layout_width="match_parent"
@@ -166,29 +189,6 @@
                     android:layout_height="wrap_content"
                     android:text="+"/>
             </LinearLayout>
-        </LinearLayout>
-
-        <!-- 控制按钮 -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginTop="16dp">
-
-            <Button
-                android:id="@+id/test_stop_button"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="停止唤醒" />
-
-            <Button
-                android:id="@+id/test_start_button"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="启动唤醒" />
-
         </LinearLayout>
     </LinearLayout>
 
