@@ -2,190 +2,230 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
+    android:orientation="horizontal"
     android:padding="16dp">
 
-    <!-- 唤醒状态指示器移到最顶端 -->
+    <!-- 左侧控制面板 -->
     <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:padding="8dp"
-        android:background="#F5F5F5">  <!-- 添加背景色使状态栏更明显 -->
-
-        <TextView
-            android:id="@+id/wakeupStatusText"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:textSize="14sp"
-            android:text="正在初始化唤醒系统..." />
-
-        <ProgressBar
-            android:id="@+id/wakeupProgressBar"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
-            android:layout_marginStart="8dp"
-            style="?android:attr/progressBarStyleSmall" />
-    </LinearLayout>
-
-    <!-- 状态显示区域 -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center_vertical">
-
-        <TextView
-            android:id="@+id/statusText"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="空闲"
-            android:layout_marginEnd="8dp"/>
-
-        <ProgressBar
-            android:id="@+id/progressBar"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
-            android:visibility="invisible"/>
-    </LinearLayout>
-
-    <!-- 意图显示 -->
-    <TextView
-        android:id="@+id/intentTextView"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:text="意图: 未识别"/>
-
-    <!-- 参数控制区域 -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="0.4"
         android:orientation="vertical"
-        android:layout_marginTop="16dp">
+        android:paddingEnd="16dp">
 
-        <!-- 麦克风增益控制 -->
-        <TextView
-            android:id="@+id/tvMicGain"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="麦克风增益: 1.0"/>
-
+        <!-- 唤醒状态指示器 -->
         <LinearLayout
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal">
-            <Button
-                android:id="@+id/btnMicGainDecrease"
-                android:layout_width="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:padding="8dp"
+            android:background="#F5F5F5">
+
+            <TextView
+                android:id="@+id/wakeupStatusText"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:text="-"/>
-            <Button
-                android:id="@+id/btnMicGainIncrease"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="+"/>
+                android:layout_weight="1"
+                android:textSize="14sp"
+                android:text="正在初始化唤醒系统..." />
+
+            <ProgressBar
+                android:id="@+id/wakeupProgressBar"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_marginStart="8dp"
+                style="?android:attr/progressBarStyleSmall" />
         </LinearLayout>
 
-        <!-- 音频增益控制 -->
-        <TextView
-            android:id="@+id/tvAudioGain"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="音频增益: 1.0"/>
-
+        <!-- 状态显示区域 -->
         <LinearLayout
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal">
-            <Button
-                android:id="@+id/btnAudioGainDecrease"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginTop="8dp">
+
+            <TextView
+                android:id="@+id/statusText"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="-"/>
-            <Button
-                android:id="@+id/btnAudioGainIncrease"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="+"/>
+                android:text="空闲"
+                android:layout_marginEnd="8dp"/>
+
+            <ProgressBar
+                android:id="@+id/progressBar"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:visibility="invisible"/>
         </LinearLayout>
 
-        <!-- 灵敏度控制 -->
+        <!-- 意图显示 -->
         <TextView
-            android:id="@+id/tvSensitivity"
-            android:layout_width="wrap_content"
+            android:id="@+id/intentTextView"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="灵敏度: 0.5"/>
+            android:layout_marginTop="8dp"
+            android:text="意图: 未识别"/>
 
+        <!-- 参数控制区域 -->
         <LinearLayout
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal">
-            <Button
-                android:id="@+id/btnSensitivityDecrease"
+            android:orientation="vertical"
+            android:layout_marginTop="16dp">
+
+            <!-- 麦克风增益控制 -->
+            <TextView
+                android:id="@+id/tvMicGain"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="-"/>
-            <Button
-                android:id="@+id/btnSensitivityIncrease"
+                android:text="麦克风增益: 1.0"/>
+
+            <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="+"/>
+                android:orientation="horizontal">
+                <Button
+                    android:id="@+id/btnMicGainDecrease"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="-"/>
+                <Button
+                    android:id="@+id/btnMicGainIncrease"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="+"/>
+            </LinearLayout>
+
+            <!-- 音频增益控制 -->
+            <TextView
+                android:id="@+id/tvAudioGain"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="音频增益: 1.0"/>
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+                <Button
+                    android:id="@+id/btnAudioGainDecrease"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="-"/>
+                <Button
+                    android:id="@+id/btnAudioGainIncrease"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="+"/>
+            </LinearLayout>
+
+            <!-- 灵敏度控制 -->
+            <TextView
+                android:id="@+id/tvSensitivity"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="灵敏度: 0.5"/>
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+                <Button
+                    android:id="@+id/btnSensitivityDecrease"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="-"/>
+                <Button
+                    android:id="@+id/btnSensitivityIncrease"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="+"/>
+            </LinearLayout>
+
+            <!-- 采样率控制 -->
+            <TextView
+                android:id="@+id/tvSampleRate"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="采样率: 16000"/>
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+                <Button
+                    android:id="@+id/btnSampleRateDecrease"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="-"/>
+                <Button
+                    android:id="@+id/btnSampleRateIncrease"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="+"/>
+            </LinearLayout>
         </LinearLayout>
 
-        <!-- 采样率控制 -->
-        <TextView
-            android:id="@+id/tvSampleRate"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="采样率: 16000"/>
-
+        <!-- 控制按钮 -->
         <LinearLayout
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal">
+            android:orientation="horizontal"
+            android:layout_marginTop="16dp">
+
             <Button
-                android:id="@+id/btnSampleRateDecrease"
-                android:layout_width="wrap_content"
+                android:id="@+id/test_stop_button"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:text="-"/>
+                android:layout_weight="1"
+                android:text="停止唤醒" />
+
             <Button
-                android:id="@+id/btnSampleRateIncrease"
-                android:layout_width="wrap_content"
+                android:id="@+id/test_start_button"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:text="+"/>
+                android:layout_weight="1"
+                android:text="启动唤醒" />
+
         </LinearLayout>
     </LinearLayout>
 
-    <!-- 对话记录区域 -->
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/conversationRecyclerView"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:layout_marginTop="16dp"/>
-
-    <!-- 输入区域 -->
+    <!-- 右侧对话区域 -->
     <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:layout_marginTop="16dp">
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="0.6"
+        android:orientation="vertical">
 
-        <EditText
-            android:id="@+id/inputEditText"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:hint="输入文本"/>
+        <!-- 对话记录区域 -->
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/conversationRecyclerView"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"/>
 
-        <Button
-            android:id="@+id/sendButton"
-            android:layout_width="wrap_content"
+        <!-- 输入区域 -->
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="发送"/>
+            android:orientation="horizontal"
+            android:layout_marginTop="16dp">
+
+            <EditText
+                android:id="@+id/inputEditText"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:hint="输入文本"/>
+
+            <Button
+                android:id="@+id/sendButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="发送"/>
+        </LinearLayout>
     </LinearLayout>
 
 </LinearLayout>

@@ -63,6 +63,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ExecutorService;
+import androidx.appcompat.app.AlertDialog;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -118,6 +119,10 @@ public class MainActivity extends AppCompatActivity {
     private ProgressBar wakeupProgressBar;
 
     private static final int PERMISSION_REQUEST_CODE = 1;
+    private static final int LOCATION_PERMISSION_REQUEST_CODE = 2;
+
+    private Button testStopButton;
+    private Button testStartButton;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -133,17 +138,186 @@ public class MainActivity extends AppCompatActivity {
         } else {
             initializeAll();
         }
+
+        // 初始化按钮
+        testStopButton = findViewById(R.id.test_stop_button);
+        testStartButton = findViewById(R.id.test_start_button);
+        
+        setupTestButtons();
     }
 
     private void initializeAll() {
-        // 1. 初始化 VoiceAssist
-        initializeVoiceAssist();
-        
-        // 2. 初始化其他 UI 组件
-        initializeComponents();
-        
-        // 3. 设置按钮点击事件
+            // 2. 初始化 VoiceAssist
+        initializeVoiceAssist();    
+            // 4. 初始化其他组件
+        initializeComponents();          
+            // 5. 设置按钮点击事件
         setupClickListeners();
+             // 1. 检查位置权限
+        if (checkLocationPermissions()) {          
+              // 3. 初始化位置服务
+               initializeLocationServices();
+        } else {
+            requestLocationPermissions();
+        }
+    }
+
+    private boolean checkLocationPermissions() {
+        return checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
+            && checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED;
+    }
+
+    private void requestLocationPermissions() {
+        requestPermissions(new String[]{
+            Manifest.permission.ACCESS_FINE_LOCATION,
+            Manifest.permission.ACCESS_COARSE_LOCATION
+        }, LOCATION_PERMISSION_REQUEST_CODE);
+    }
+
+    void initializeLocationServices() {
+        try {
+            LocationManager locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+            if (locationManager == null) {
+                Log.e(TAG, "LocationManager is null");
+                return;
+            }
+
+            // 检查GPS是否启用
+            if (!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+                Log.w(TAG, "GPS is disabled");
+                showEnableLocationDialog();
+                return;
+            }
+
+            // 检查权限
+            if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                Log.w(TAG, "Location permission not granted");
+                requestLocationPermissions();
+                return;
+            }
+
+            // 创建位置请求回调
+            LocationListener locationListener = new LocationListener() {
+                @Override
+                public void onLocationChanged(@NonNull Location location) {
+                    Log.d(TAG, "Location updated: " + location.getLatitude() + ", " + location.getLongitude());
+                    updateLocationInfo(location);
+                }
+
+                @Override
+                public void onProviderEnabled(@NonNull String provider) {
+                    Log.d(TAG, "Provider enabled: " + provider);
+                }
+
+                @Override
+                public void onProviderDisabled(@NonNull String provider) {
+                    Log.d(TAG, "Provider disabled: " + provider);
+                }
+            };
+
+            // 请求位置更新
+            locationManager.requestLocationUpdates(
+                LocationManager.GPS_PROVIDER,
+                10000,  // 10 seconds
+                10f,    // 10 meters
+                locationListener
+            );
+
+            // 获取最后已知位置
+            Location lastLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+            if (lastLocation != null) {
+                Log.d(TAG, "Using last known location");
+                updateLocationInfo(lastLocation);
+            } else {
+                Log.w(TAG, "No last known location available");
+            }
+
+        } catch (SecurityException e) {
+            Log.e(TAG, "Security exception when requesting location updates", e);
+        } catch (Exception e) {
+            Log.e(TAG, "Error initializing location services", e);
+        }
+    }
+
+    private void showEnableLocationDialog() {
+        new AlertDialog.Builder(this)
+            .setTitle("启用位置服务")
+            .setMessage("请启用GPS以获取位置信息")
+            .setPositiveButton("设置", (dialog, which) -> {
+                startActivity(new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS));
+            })
+            .setNegativeButton("取消", null)
+            .show();
+    }
+
+    private void updateLocationInfo(Location location) {
+        try {
+            Log.d(TAG, "Updating location info");
+            Geocoder geocoder = new Geocoder(this, Locale.getDefault());
+            
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                // Android 13及以上版本使用异步API
+                geocoder.getFromLocation(
+                    location.getLatitude(),
+                    location.getLongitude(),
+                    1,
+                    addresses -> {
+                        if (!addresses.isEmpty()) {
+                            Address address = addresses.get(0);
+                            String locationStr = formatAddress(address);
+                            Log.d(TAG, "Formatted location: " + locationStr);
+                            updateLocationString(locationStr);
+                        } else {
+                            Log.w(TAG, "No address found for location");
+                        }
+                    }
+                );
+            } else {
+                // 较旧版本使用同步API
+                List<Address> addresses = geocoder.getFromLocation(
+                    location.getLatitude(),
+                    location.getLongitude(),
+                    1
+                );
+                if (!addresses.isEmpty()) {
+                    Address address = addresses.get(0);
+                    String locationStr = formatAddress(address);
+                    Log.d(TAG, "Formatted location: " + locationStr);
+                    updateLocationString(locationStr);
+                } else {
+                    Log.w(TAG, "No address found for location");
+                }
+            }
+        } catch (IOException e) {
+            Log.e(TAG, "Error getting address from location", e);
+        }
+    }
+
+    private String formatAddress(Address address) {
+        StringBuilder sb = new StringBuilder();
+        
+        if (address.getAdminArea() != null) {
+            sb.append(address.getAdminArea());
+        }
+        if (address.getLocality() != null) {
+            sb.append(address.getLocality());
+        }
+        if (address.getSubLocality() != null) {
+            sb.append(address.getSubLocality());
+        }
+        
+        String result = sb.toString();
+        return result.isEmpty() ? "未知位置" : result;
+    }
+
+    private void updateLocationString(String locationStr) {
+        runOnUiThread(() -> {
+            currentLocation = locationStr;
+            if (voiceAssist != null) {
+                voiceAssist.setCurrentLocation(locationStr);
+            }
+            Log.i(TAG, "Location updated to: " + locationStr);
+        });
     }
 
     private void initializeComponents() {
@@ -165,6 +339,9 @@ public class MainActivity extends AppCompatActivity {
 
         // 更新参数显示
         updateParameterDisplay();
+
+        // 设置按钮点击事件
+        setupClickListeners();
     }
 
     private void setupClickListeners() {
@@ -260,7 +437,9 @@ public class MainActivity extends AppCompatActivity {
 
     private void initializeVoiceAssist() {
         try {
-            voiceAssist = new VoiceAssist(this);
+            // 使用统一的初始化入口
+            voiceAssist = VoiceAssist.initialize(this);
+            
             setupVoiceAssistCallback();
             
             updateWakeupStatus(false, "正在初始化语音助手...");
@@ -270,16 +449,10 @@ public class MainActivity extends AppCompatActivity {
                 Log.e(TAG, "VoiceAssist initialization failed");
                 updateWakeupStatus(false, "语音助手初始化失败");
                 showError("语音助手初始化失败，请检查网络连接");
-                return;
             }
-            
-            voiceAssist.setCurrentLocation(currentLocation);
-            updateWakeupStatus(false, "正在准备唤醒系统...");
-            voiceAssist.startWakeupDetection();
-        } catch (Exception e) {
-            Log.e(TAG, "Error initializing VoiceAssist", e);
-            updateWakeupStatus(false, "语音助手初始化失败");
-            showError("语音助手初始化失败: " + e.getMessage());
+        } catch (IllegalStateException e) {
+            Log.e(TAG, "Failed to initialize VoiceAssist: " + e.getMessage());
+            showError("初始化失败：" + e.getMessage());
         }
     }
 
@@ -333,6 +506,14 @@ public class MainActivity extends AppCompatActivity {
 
     private void setupVoiceAssistCallback() {
         voiceAssist.setCallback(new VoiceAssist.VoiceAssistCallback() {
+            @Override
+            public void onWakeup() {
+                Log.d(TAG, "Wake-up detected!");
+                runOnUiThread(() -> {
+                    Toast.makeText(MainActivity.this, "已唤醒", Toast.LENGTH_SHORT).show();
+                });
+            }
+
             @Override
             public void onWakeupSystemReady() {
                 Log.d(TAG, "onWakeupSystemReady callback received");
@@ -425,12 +606,18 @@ public class MainActivity extends AppCompatActivity {
             public void onDialogueEnded() {
                 runOnUiThread(() -> {
                     updateUIState(SpeechState.IDLE);
+                    // 在对话结束时，可以选择是否重启唤醒
+                    // voiceAssist.restartWakeupDetection();
                 });
             }
 
             @Override
             public void onError(String errorMessage) {
-                runOnUiThread(() -> showError(errorMessage));
+                runOnUiThread(() -> {
+                    showError(errorMessage);
+                    // 在发生错误时，可以选择是否重启唤醒
+                    // voiceAssist.restartWakeupDetection();
+                });
             }
 
             @Override
@@ -438,15 +625,6 @@ public class MainActivity extends AppCompatActivity {
                 runOnUiThread(() -> {
                     updateUIState(SpeechState.IDLE);
                     showToast("语音被打断");
-                });
-            }
-
-            @Override
-            public void onWakeup() {
-                Log.d(TAG, "Wake-up detected!");
-                runOnUiThread(() -> {
-                    updateWakeupStatus(false, "已唤醒");  // 改回显示唤醒状态
-                    Toast.makeText(MainActivity.this, "唤醒成功!", Toast.LENGTH_SHORT).show();
                 });
             }
         });
@@ -558,151 +736,6 @@ public class MainActivity extends AppCompatActivity {
             } catch (Exception e) {
                 Log.e(TAG, "Chat model error: " + e.getMessage());
             }
-        }
-    }
-
-    void initializeLocationServices() {
-        LocationManager locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-            // 使用新的LocationListener实现
-            LocationListener locationListener = new LocationListener() {
-                @Override
-                public void onLocationChanged(@NonNull Location location) {
-                    updateLocationInfo(location);
-                }
-            };
-
-            // 使用新的请求位置更新方法
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                // Android 12及以上版本
-                locationManager.requestLocationUpdates(
-                    LocationManager.GPS_PROVIDER,
-                    10000,  // 10 seconds
-                    10f,    // 10 meters
-                    Executors.newSingleThreadExecutor(),
-                    locationListener
-                );
-            } else {
-                // 较旧版本
-                locationManager.requestLocationUpdates(
-                    LocationManager.GPS_PROVIDER,
-                    10000,
-                    10f,
-                    locationListener
-                );
-            }
-            
-            // 获取最后已知位置
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                locationManager.getCurrentLocation(
-                    LocationManager.GPS_PROVIDER,
-                    null,
-                    Executors.newSingleThreadExecutor(),
-                    location -> {
-                        if (location != null) {
-                            updateLocationInfo(location);
-                        }
-                    }
-                );
-            } else {
-                Location lastLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-                if (lastLocation != null) {
-                    updateLocationInfo(lastLocation);
-                }
-            }
-        }
-    }
-
-    // 添加新的辅助方法处理位置信息更新
-    private void updateLocationInfo(Location location) {
-        try {
-            Geocoder geocoder = new Geocoder(this, Locale.getDefault());
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                // Android 13及以上版本使用新的异步API
-                geocoder.getFromLocation(
-                    location.getLatitude(),
-                    location.getLongitude(),
-                    1,
-                    addresses -> {
-                        if (!addresses.isEmpty()) {
-                            processAddress(addresses.get(0));
-                        }
-                    }
-                );
-            } else {
-                // 较旧版本使用同步API
-                List<Address> addresses = geocoder.getFromLocation(
-                    location.getLatitude(),
-                    location.getLongitude(),
-                    1
-                );
-                if (!addresses.isEmpty()) {
-                    processAddress(addresses.get(0));
-                }
-            }
-        } catch (IOException e) {
-            Log.e(TAG, "Error getting address from location", e);
-        }
-    }
-
-    private void processAddress(Address address) {
-        String locationStr = String.format("%s%s%s",
-            address.getAdminArea() != null ? address.getAdminArea() : "",
-            address.getLocality() != null ? address.getLocality() : "",
-            address.getSubLocality() != null ? address.getSubLocality() : ""
-        );
-        currentLocation = locationStr;
-        if (voiceAssist != null) {
-            voiceAssist.setCurrentLocation(locationStr);
-        }
-        Log.d(TAG, "Location updated: " + locationStr);
-    }
-
-    // 添加音乐处理方法
-    private void handleMusic(String title, String singer) {
-        try {
-            String message;
-            if (!title.isEmpty() && !singer.isEmpty()) {
-                message = String.format("正在播放：%s - %s", title, singer);
-            } else if (!title.isEmpty()) {
-                message = String.format("正在播放：%s", title);
-            } else if (!singer.isEmpty()) {
-                message = String.format("正在播放 %s 的音乐", singer);
-            } else {
-                message = "正在播放音乐";
-            }
-            
-            addConversationItem(message, ConversationItem.TYPE_ASSISTANT);
-            showToast(message);
-            
-            // TODO: 实现实际的音乐播放逻辑
-            Log.d(TAG, "Music request: " + message);
-            
-        } catch (Exception e) {
-            Log.e(TAG, "Error handling music: " + e.getMessage());
-            showError("播放音乐时出错");
-        }
-    }
-
-    // 修改导航处理方法
-    private void handleNavigation(JSONObject data) {
-        try {
-            String address = data.optString("address", "");
-            if (address.isEmpty()) {
-                String response = "抱歉，我需要知道您去哪里";
-                addConversationItem(response, ConversationItem.TYPE_ASSISTANT);
-                return;
-            }
-            
-            String message = String.format("正在为您导航到：%s", address);
-            addConversationItem(message, ConversationItem.TYPE_ASSISTANT);
-            
-            // TODO: 实现实际的导航逻辑
-            Log.d(TAG, "Navigation request to: " + address);
-            
-        } catch (Exception e) {
-            Log.e(TAG, "Error handling navigation: " + e.getMessage());
-            showError("导航请求处理出错");
         }
     }
 
@@ -894,10 +927,10 @@ public class MainActivity extends AppCompatActivity {
 
     // 添加更新唤醒状态的辅助方法
     private void updateWakeupStatus(boolean isReady, String message) {
-        Log.d(TAG, "updateWakeupStatus called: isReady=" + isReady + ", message=" + message);
+        Log.d(TAG, "[STATUS] Updating wakeup status: isReady=" + isReady + ", message=" + message);
         runOnUiThread(() -> {
             if (wakeupStatusText != null) {
-                Log.d(TAG, "Setting wakeup status text to: " + message);
+                Log.d(TAG, "[STATUS] Setting wakeup status text to: " + message);
                 wakeupStatusText.setText(message);
                 int color = isReady ? R.color.green : R.color.gray;
                 wakeupStatusText.setTextColor(getResources().getColor(color));
@@ -907,4 +940,59 @@ public class MainActivity extends AppCompatActivity {
             }
         });
     }
+
+    /**
+     * 新增：手动控制唤醒重启的示例方法
+     */
+    private void handleDialogueComplete() {
+        // 根据业务逻辑决定是否重启唤醒
+        if (shouldRestartWakeup()) {
+            voiceAssist.restartWakeupDetection();
+        }
+    }
+
+    private boolean shouldRestartWakeup() {
+        // 根据实际业务需求实现判断逻辑
+        return true;
+    }
+
+    private void setupTestButtons() {
+        Log.d(TAG, "[SETUP] Setting up test buttons");
+        
+        testStopButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (voiceAssist != null) {
+                    try {
+                        voiceAssist.stopWakeupDetection();
+                        updateWakeupStatus(false, "唤醒检测已停止");
+                    } catch (Exception e) {
+                        Log.e(TAG, "[BUTTON] Error stopping wakeup detection", e);
+                        updateWakeupStatus(false, "停止失败: " + e.getMessage());
+                    }
+                }
+            }
+        });
+        
+        testStartButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (voiceAssist != null) {
+                    try {
+                        setupVoiceAssistCallback();  // 直接调用已有的方法
+                        voiceAssist.startWakeupDetection();
+                        updateWakeupStatus(true, "唤醒检测已启动");
+                    } catch (Exception e) {
+                        Log.e(TAG, "[BUTTON] Error starting wakeup detection", e);
+                        updateWakeupStatus(false, "启动失败: " + e.getMessage());
+                    }
+                }
+            }
+        });
+        
+        Log.d(TAG, "[SETUP] Test buttons setup completed");
+    }
 }
+
+
+
